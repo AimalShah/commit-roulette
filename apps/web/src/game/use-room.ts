@@ -10,7 +10,7 @@ import type {
   RoundScore,
   Submission,
 } from '@commit-roulette/shared/types'
-import { you, RIVAL_PLAYERS } from '@/mock/session'
+import { RIVAL_PLAYERS, useYouPlayer } from '@/mock/session'
 import { makeRng, pickCategory, pickChallengeForCategory, runTests, skillFor } from './simulate'
 import { buildRoundScore } from './simulate'
 
@@ -57,6 +57,7 @@ export function normaliseRoomCode(input?: string): string {
 }
 
 export function useRoom(codeFromUrl?: string): RoomController {
+  const you = useYouPlayer()
   const joinCode = useMemo(() => normaliseRoomCode(codeFromUrl) || 'K7X2QM', [codeFromUrl])
   const rng = useMemo(() => makeRng(joinCode), [joinCode])
 
@@ -72,6 +73,26 @@ export function useRoom(codeFromUrl?: string): RoomController {
   const [roundResults, setRoundResults] = useState<RoundScore[]>([])
   const [statuses, setStatuses] = useState<Record<string, PlayerStatus>>(() => idleStatuses([you]))
   const [history, setHistory] = useState<GameState['history']>([])
+
+  // Clerk resolves the user after the first render, so the seat starts as a
+  // guest and is renamed in place once the session lands.
+  const youIdRef = useRef(you.id)
+  useEffect(() => {
+    const previousId = youIdRef.current
+    if (previousId === you.id) return
+    youIdRef.current = you.id
+
+    setPlayers((prev) =>
+      prev.map((p) => (p.isYou ? { ...p, id: you.id, name: you.name, handle: you.handle, avatarSeed: you.avatarSeed } : p)),
+    )
+    setStatuses((prev) => {
+      const { [previousId]: status, ...rest } = prev
+      return { ...rest, [you.id]: status ?? 'idle' }
+    })
+    setSubmissions((prev) =>
+      prev.map((s) => (s.playerId === previousId ? { ...s, playerId: you.id } : s)),
+    )
+  }, [you])
 
   const timers = useRef<number[]>([])
   const botDelays = useRef<Map<string, number>>(new Map())
@@ -292,7 +313,7 @@ export function useRoom(codeFromUrl?: string): RoomController {
         setStatus(you.id, 'scored')
       }, EXECUTE_MS)
     },
-    [after, enter, phase, setStatus],
+    [after, enter, phase, setStatus, you.id],
   )
 
   const endGame = useCallback(() => {
@@ -313,7 +334,7 @@ export function useRoom(codeFromUrl?: string): RoomController {
     setPlayers([you])
     setStatuses(idleStatuses([you]))
     enter('lobby')
-  }, [clearTimers, enter])
+  }, [clearTimers, enter, you])
 
   const joinRival = useCallback(
     (bot: Omit<Player, 'total' | 'rounds'>) => {

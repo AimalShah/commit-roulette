@@ -14,14 +14,19 @@ import { Progress } from '@/components/ui/progress'
 import { Separator } from '@/components/ui/separator'
 import { CATEGORY_MAP } from '@commit-roulette/shared/challenges'
 import { cn } from '@/lib/cn'
-import { initials, ordinal, plural, relativeTime } from '@commit-roulette/shared/format'
+import { useEnsureProfile } from '@/lib/supabase'
+import { ordinal, plural, relativeTime } from '@commit-roulette/shared/format'
 import { generateJoinCode, isValidJoinCode, normaliseJoinCode } from '@commit-roulette/shared/join-code'
-import { currentUser } from '@/mock/session'
+import { DEMO_PLAN, useCurrentUser } from '@/mock/session'
 import { PLAYER_STATS, RECENT_GAMES } from '@/mock/recent-games'
 import type { Category } from '@commit-roulette/shared/types'
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const currentUser = useCurrentUser()
+  useEnsureProfile(
+    currentUser ? { handle: currentUser.handle, displayName: currentUser.name } : null,
+  )
   const [code, setCode] = useState('')
   const [newCode, setNewCode] = useState(() => generateJoinCode())
   const [copied, setCopied] = useState(false)
@@ -59,12 +64,12 @@ export function DashboardPage() {
         <div className="flex flex-wrap items-center gap-4">
           <Avatar className="size-12">
             <AvatarFallback className="bg-primary/15 text-primary text-sm">
-              {initials(currentUser.name)}
+              {currentUser?.initials}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight">
-              Hey {currentUser.name.split(' ')[0]}
+              Hey {currentUser?.name.split(' ')[0]}
             </h1>
             <p className="text-muted-foreground text-sm">
               {PLAYER_STATS.gamesPlayed} {plural(PLAYER_STATS.gamesPlayed, 'game')} played ·{' '}
@@ -73,7 +78,7 @@ export function DashboardPage() {
           </div>
           <Badge variant="primary" className="ml-auto">
             <Crown className="size-3" />
-            {currentUser.plan}
+            {DEMO_PLAN}
           </Badge>
         </div>
 

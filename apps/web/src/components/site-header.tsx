@@ -1,11 +1,14 @@
 import { GitCommitHorizontal, LogIn } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import { SignedIn, SignedOut, UserButton } from '@clerk/clerk-react'
 
 import { Wordmark } from '@/components/brand'
 import { Button } from '@/components/ui/button'
-import { currentUser } from '@/mock/session'
+import { useCurrentUser } from '@/mock/session'
 
 export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
+  const currentUser = useCurrentUser()
+
   return (
     <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
@@ -32,7 +35,7 @@ export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
             </a>
           </Button>
           {showAuth && (
-            <>
+            <SignedOut>
               <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
                 <Link to="/sign-in">Sign in</Link>
               </Button>
@@ -42,13 +45,22 @@ export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
                   Play
                 </Link>
               </Button>
-            </>
+            </SignedOut>
           )}
-          {!showAuth && (
+          <SignedIn>
             <span className="text-muted-foreground hidden font-mono text-xs sm:inline">
-              {currentUser.handle}
+              {currentUser?.handle}
             </span>
-          )}
+            {showAuth && (
+              <Button asChild size="sm">
+                <Link to="/dashboard">
+                  <LogIn />
+                  Play
+                </Link>
+              </Button>
+            )}
+            <UserButton />
+          </SignedIn>
         </div>
       </div>
     </header>

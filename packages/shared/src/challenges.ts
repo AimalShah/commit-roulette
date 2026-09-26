@@ -1,4 +1,4 @@
-import type { Category, Challenge } from '@/lib/types'
+import type { Category, Challenge } from './types'
 
 /**
  * The seed set is fixed and hand-checked (PRD §6). One challenge per
