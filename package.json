@@ -1,0 +1,30 @@
+{
+  "name": "commit-roulette",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "turbo run build",
+    "dev": "turbo run dev",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules",
+    "seed": "tsx supabase/seed.mts",
+    "db:check": "tsx supabase/scripts/db-check.mts",
+    "db:reset": "supabase db reset",
+    "db:types": "supabase gen types typescript --local > packages/shared/src/database.types.ts",
+    "functions:serve": "supabase functions serve execute-submission --env-file apps/web/.env.local",
+    "test:grader": "node --experimental-strip-types --test supabase/functions/execute-submission/_shared/pipeline.test.ts",
+    "verify": "pnpm typecheck && pnpm lint && pnpm build && pnpm test:grader && pnpm db:check"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0",
+    "typescript": "~6.0.2",
+    "tsx": "^4.19.0"
+  }
+}

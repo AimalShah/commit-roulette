@@ -1,4 +1,4 @@
-import type { RoundScore, TestResult } from '@/lib/types'
+import type { RoundScore, TestResult } from './types'
 
 /** PRD FR8 — the four components, weighted so correctness always dominates. */
 export const WEIGHTS = {

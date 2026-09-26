@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom'
 
 import { Wordmark } from '@/components/brand'
 import { Button } from '@/components/ui/button'
-import { currentUser } from '@/mock/session'
+import { useSessionUser } from '@/hooks/use-session-user'
 
 export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
+  const { user, isSignedIn } = useSessionUser()
+
   return (
     <header className="bg-background/80 sticky top-0 z-40 border-b backdrop-blur-md">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-4 px-4 sm:px-6">
@@ -31,7 +33,7 @@ export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
               <GitCommitHorizontal />
             </a>
           </Button>
-          {showAuth && (
+          {showAuth && !isSignedIn && (
             <>
               <Button asChild variant="ghost" size="sm" className="text-muted-foreground">
                 <Link to="/sign-in">Sign in</Link>
@@ -44,9 +46,9 @@ export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
               </Button>
             </>
           )}
-          {!showAuth && (
+          {(!showAuth || isSignedIn) && (
             <span className="text-muted-foreground hidden font-mono text-xs sm:inline">
-              {currentUser.handle}
+              {user.handle}
             </span>
           )}
         </div>

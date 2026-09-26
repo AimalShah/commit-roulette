@@ -16,18 +16,21 @@ import { CATEGORY_MAP } from '@commit-roulette/shared/challenges'
 import { cn } from '@/lib/cn'
 import { initials, ordinal, plural, relativeTime } from '@commit-roulette/shared/format'
 import { generateJoinCode, isValidJoinCode, normaliseJoinCode } from '@commit-roulette/shared/join-code'
-import { currentUser } from '@/mock/session'
+import { useSessionUser } from '@/hooks/use-session-user'
+import { createRoom, joinRoom, RoomError } from '@/lib/room-api'
 import { PLAYER_STATS, RECENT_GAMES } from '@/mock/recent-games'
 import type { Category } from '@commit-roulette/shared/types'
 
 export function DashboardPage() {
   const navigate = useNavigate()
+  const { user } = useSessionUser()
   const [code, setCode] = useState('')
   const [newCode, setNewCode] = useState(() => generateJoinCode())
   const [copied, setCopied] = useState(false)
   const [joinError, setJoinError] = useState<string | null>(null)
+  const [busy, setBusy] = useState<'create' | 'join' | null>(null)
 
-  const join = (event: React.FormEvent) => {
+  const join = async (event: React.FormEvent) => {
     event.preventDefault()
     const value = normaliseJoinCode(code)
     if (!isValidJoinCode(value)) {
@@ -35,7 +38,33 @@ export function DashboardPage() {
       return
     }
     setJoinError(null)
-    navigate(`/room/${value}`)
+    setBusy('join')
+    try {
+      // The database checks the code and the capacity; the client only checks
+      // the shape so an obvious typo never costs a round trip.
+      await joinRoom(value, user.handle, user.name)
+      navigate(`/room/${value}`)
+    } catch (err) {
+      setJoinError(err instanceof RoomError ? err.message : 'Could not join that room.')
+      setBusy(null)
+    }
+  }
+
+  /**
+   * The code shown before the room exists is a placeholder. The real one comes
+   * from create_room, because the database owns room codes and generating one
+   * in the browser would let two people be handed the same code.
+   */
+  const create = async () => {
+    setBusy('create')
+    try {
+      const room = await createRoom(user.handle, user.name)
+      setNewCode(room.join_code)
+      navigate(`/room/${room.join_code}`)
+    } catch (err) {
+      setJoinError(err instanceof RoomError ? err.message : 'Could not create a room.')
+      setBusy(null)
+    }
   }
 
   const copy = async () => {
@@ -59,12 +88,12 @@ export function DashboardPage() {
         <div className="flex flex-wrap items-center gap-4">
           <Avatar className="size-12">
             <AvatarFallback className="bg-primary/15 text-primary text-sm">
-              {initials(currentUser.name)}
+              {initials(user.name)}
             </AvatarFallback>
           </Avatar>
           <div className="min-w-0">
             <h1 className="text-2xl font-semibold tracking-tight">
-              Hey {currentUser.name.split(' ')[0]}
+              Hey {user.name.split(' ')[0]}
             </h1>
             <p className="text-muted-foreground text-sm">
               {PLAYER_STATS.gamesPlayed} {plural(PLAYER_STATS.gamesPlayed, 'game')} played ·{' '}
@@ -73,7 +102,7 @@ export function DashboardPage() {
           </div>
           <Badge variant="primary" className="ml-auto">
             <Crown className="size-3" />
-            {currentUser.plan}
+            Play
           </Badge>
         </div>
 
@@ -117,11 +146,9 @@ export function DashboardPage() {
                 </Button>
               </div>
 
-              <Button asChild size="lg" className="w-full">
-                <Link to={`/room/${newCode}`}>
-                  <Play />
-                  Create and enter
-                </Link>
+              <Button size="lg" className="w-full" onClick={create} disabled={busy !== null}>
+                <Play />
+                {busy === 'create' ? 'Creating…' : 'Create and enter'}
               </Button>
 
               <p className="text-muted-foreground text-[0.72rem] leading-relaxed">
@@ -138,7 +165,7 @@ export function DashboardPage() {
                 Join a room
               </CardTitle>
               <CardDescription>
-                Got a code from a friend? Drop it in. No account needed to join.
+                Got a code from a friend? Drop it in. You need an account to join.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -165,8 +192,8 @@ export function DashboardPage() {
                     </p>
                   )}
                 </div>
-                <Button type="submit" size="lg" className="w-full" disabled={!code}>
-                  Join room
+                <Button type="submit" size="lg" className="w-full" disabled={!code || busy !== null}>
+                  {busy === 'join' ? 'Joining…' : 'Join room'}
                   <ArrowRight />
                 </Button>
               </form>
