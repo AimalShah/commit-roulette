@@ -1,0 +1,271 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* ------------------------------------------------------------------ *
+ * Commit Roulette — design tokens
+ * Flat dark surfaces, one acid accent, category hues for the roulette.
+ * ------------------------------------------------------------------ */
+
+/* Self-hosted so the demo never waits on a font CDN. */
+@font-face {
+  font-family: 'Geist';
+  src: url('/fonts/Geist-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Geist Mono';
+  src: url('/fonts/GeistMono-Variable.woff2') format('woff2-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --radius: 0.625rem;
+
+  --background: oklch(0.145 0.005 285);
+  --foreground: oklch(0.98 0.002 285);
+
+  --card: oklch(0.185 0.006 285);
+  --card-foreground: oklch(0.98 0.002 285);
+
+  --popover: oklch(0.21 0.007 285);
+  --popover-foreground: oklch(0.98 0.002 285);
+
+  --primary: oklch(0.92 0.19 122);
+  --primary-foreground: oklch(0.16 0.02 122);
+
+  --secondary: oklch(0.26 0.008 285);
+  --secondary-foreground: oklch(0.96 0.002 285);
+
+  --muted: oklch(0.24 0.007 285);
+  --muted-foreground: oklch(0.68 0.012 285);
+
+  --accent: oklch(0.28 0.01 285);
+  --accent-foreground: oklch(0.98 0.002 285);
+
+  --destructive: oklch(0.65 0.21 22);
+  --destructive-foreground: oklch(0.98 0.002 285);
+
+  --success: oklch(0.78 0.17 152);
+  --warning: oklch(0.82 0.16 85);
+
+  --border: oklch(0.27 0.008 285);
+  --input: oklch(0.29 0.008 285);
+  --ring: oklch(0.92 0.19 122);
+
+  /* category hues — one per roulette wedge */
+  --cat-bug: oklch(0.7 0.19 12);
+  --cat-performance: oklch(0.82 0.16 78);
+  --cat-security: oklch(0.7 0.17 300);
+  --cat-testing: oklch(0.79 0.13 205);
+  --cat-refactoring: oklch(0.78 0.16 160);
+  --cat-database: oklch(0.72 0.15 255);
+  --cat-api: oklch(0.75 0.17 45);
+
+  --grid-line: oklch(1 0 0 / 0.035);
+}
+
+@theme inline {
+  --font-sans: 'Geist', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-cat-bug: var(--cat-bug);
+  --color-cat-performance: var(--cat-performance);
+  --color-cat-security: var(--cat-security);
+  --color-cat-testing: var(--cat-testing);
+  --color-cat-refactoring: var(--cat-refactoring);
+  --color-cat-database: var(--cat-database);
+  --color-cat-api: var(--cat-api);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --animate-marquee: marquee 22s linear infinite;
+  --animate-pulse-ring: pulse-ring 1.6s ease-out infinite;
+  --animate-tick: tick 1s steps(2, start) infinite;
+}
+
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    transform: scale(0.85);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+@keyframes tick {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: var(--primary);
+    color: var(--primary-foreground);
+  }
+
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--muted-foreground);
+    background-clip: content-box;
+  }
+}
+
+@layer utilities {
+  /* faint blueprint grid used behind hero / roulette stages */
+  .bg-grid {
+    background-image:
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  .bg-dot {
+    background-image: radial-gradient(var(--grid-line) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .mask-fade-b {
+    mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+  }
+
+  .mask-fade-x {
+    mask-image: linear-gradient(to right, transparent, black 12%, black 88%, transparent);
+  }
+
+  /* numeric readouts: tabular so timers don't jitter */
+  .tnum {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* CodeMirror — match the flat surface language */
+.cm-editor {
+  height: 100%;
+  background: transparent !important;
+}
+.cm-editor .cm-scroller {
+  font-family: var(--font-mono) !important;
+  font-size: 13.5px;
+  line-height: 1.65;
+}
+.cm-editor .cm-gutters {
+  background: transparent !important;
+  border-right: 1px solid var(--border) !important;
+  color: oklch(0.45 0.01 285) !important;
+}
+.cm-editor .cm-activeLine,
+.cm-editor .cm-activeLineGutter {
+  background: oklch(1 0 0 / 0.035) !important;
+}
+.cm-editor .cm-focused {
+  outline: none !important;
+}
+.cm-editor .cm-cursor {
+  border-left-color: var(--primary) !important;
+}
+.cm-editor .cm-selectionBackground,
+.cm-editor .cm-content ::selection {
+  background: oklch(0.92 0.19 122 / 0.18) !important;
+}
+.cm-editor .cm-tooltip {
+  background: var(--popover) !important;
+  border: 1px solid var(--border) !important;
+  color: var(--popover-foreground) !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
