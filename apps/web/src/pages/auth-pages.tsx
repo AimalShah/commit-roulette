@@ -1,170 +1,52 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
+import { SignIn, SignUp } from '@clerk/clerk-react'
 
 import { Wordmark } from '@/components/brand'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
 import { isValidJoinCode, normaliseJoinCode } from '@commit-roulette/shared/join-code'
 
 /**
- * Stands in for Clerk's pre-built component. Swapping this for
- * <SignIn /> / <SignUp /> from @clerk/clerk-react is a one-file change —
- * everything downstream reads the session from @/mock/session.
+ * Clerk's prebuilt components. The social buttons (GitHub, and anything else
+ * enabled in the Clerk dashboard) are rendered by Clerk itself.
  */
-export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
-  const navigate = useNavigate()
-  const isSignUp = mode === 'sign-up'
+const appearance = {
+  variables: {
+    colorBackground: '#1f1f22',
+    colorPrimary: '#b8f24a',
+    colorText: '#fafafa',
+    colorTextSecondary: '#a6a6ad',
+    colorInputBackground: '#161618',
+    colorInputText: '#fafafa',
+    borderRadius: '0.6rem',
+  },
+  elements: {
+    rootBox: 'w-full',
+    cardBox: 'w-full shadow-none',
+    card: 'bg-transparent shadow-none border-none',
+    footer: 'bg-transparent',
+  },
+}
 
-  const [email, setEmail] = useState(isSignUp ? '' : 'aimal@commitroulette.dev')
-  const [password, setPassword] = useState(isSignUp ? '' : 'roulette')
-  const [username, setUsername] = useState(isSignUp ? '' : '')
-  const [code, setCode] = useState('')
-  const [error, setError] = useState<string | null>(null)
-  const [busy, setBusy] = useState(false)
+/**
+ * `?room=K7X2QM` on the auth links keeps the old join-code flow: land in the
+ * room instead of the dashboard once the user is authenticated.
+ */
+function useRedirectUrl(): string {
+  const [params] = useSearchParams()
+  const room = normaliseJoinCode(params.get('room') ?? '')
+  if (isValidJoinCode(room)) return `/room/${room}`
+  return params.get('redirect_url') ?? '/dashboard'
+}
 
-  const handleSubmit = (event: React.FormEvent) => {
-    event.preventDefault()
-    setError(null)
-
-    if (isSignUp && username.trim().length < 3) {
-      setError('Pick a username of at least 3 characters.')
-      return
-    }
-    if (!email.includes('@')) {
-      setError('That email does not look right.')
-      return
-    }
-    if (password.length < 8) {
-      setError('Passwords need at least 8 characters.')
-      return
-    }
-
-    setBusy(true)
-    window.setTimeout(() => {
-      const room = normaliseJoinCode(code)
-      navigate(isValidJoinCode(room) ? `/room/${room}` : '/dashboard')
-    }, 700)
-  }
-
+function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh lg:grid-cols-2">
-      {/* form */}
       <div className="flex flex-col px-5 py-8 sm:px-10">
         <Link to="/" className="w-fit" aria-label="Back to home">
           <Wordmark />
         </Link>
 
         <div className="flex flex-1 items-center justify-center py-10">
-          <div className="w-full max-w-sm">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {isSignUp ? 'Create your account' : 'Welcome back'}
-            </h1>
-            <p className="text-muted-foreground mt-2 text-sm">
-              {isSignUp
-                ? 'An account is only needed to host a room. Joining is open to anyone with the code.'
-                : 'Sign in to host rooms and keep your score history.'}
-            </p>
-
-            <form onSubmit={handleSubmit} className="mt-8 space-y-4" noValidate>
-              {isSignUp && (
-                <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
-                  <Input
-                    id="username"
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
-                    placeholder="aimal"
-                    autoComplete="username"
-                  />
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="you@company.dev"
-                  autoComplete="email"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Password</Label>
-                  {!isSignUp && (
-                    <button
-                      type="button"
-                      className="text-muted-foreground hover:text-primary text-[0.7rem] transition-colors"
-                    >
-                      Forgot?
-                    </button>
-                  )}
-                </div>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="••••••••"
-                  autoComplete={isSignUp ? 'new-password' : 'current-password'}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="code">
-                  Room code <span className="text-muted-foreground normal-case">(optional)</span>
-                </Label>
-                <Input
-                  id="code"
-                  value={code}
-                  onChange={(event) => setCode(normaliseJoinCode(event.target.value))}
-                  placeholder="K7X2QM"
-                  maxLength={6}
-                  className="font-mono tracking-[0.2em] uppercase"
-                />
-              </div>
-
-              {error && (
-                <p role="alert" className="text-destructive text-xs">
-                  {error}
-                </p>
-              )}
-
-              <Button type="submit" size="lg" className="w-full" disabled={busy}>
-                {busy ? 'One moment…' : isSignUp ? 'Create account' : 'Sign in'}
-              </Button>
-            </form>
-
-            <div className="my-6 flex items-center gap-3">
-              <Separator className="flex-1" />
-              <span className="text-muted-foreground text-[0.7rem]">or</span>
-              <Separator className="flex-1" />
-            </div>
-
-            <div className="grid gap-2">
-              <Button variant="outline" type="button">
-                Continue with GitHub
-              </Button>
-              <Button variant="outline" type="button">
-                Continue with Google
-              </Button>
-            </div>
-
-            <p className="text-muted-foreground mt-8 text-center text-xs">
-              {isSignUp ? 'Already have an account? ' : 'No account yet? '}
-              <Link
-                to={isSignUp ? '/sign-in' : '/sign-up'}
-                className="text-primary hover:underline"
-              >
-                {isSignUp ? 'Sign in' : 'Create one'}
-              </Link>
-            </p>
-          </div>
+          <div className="flex w-full max-w-sm justify-center">{children}</div>
         </div>
       </div>
 
@@ -201,9 +83,9 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
           </div>
 
           <div className="border-border text-muted-foreground rounded-xl border p-5 text-xs leading-relaxed">
-            <span className="text-foreground block font-medium">Demo build</span>
-            Authentication is stubbed — the form accepts anything reasonable and drops you on the
-            dashboard.
+            <span className="text-foreground block font-medium">Accounts are real</span>
+            Sign in with GitHub or an email and password. Joining a room still needs nothing but
+            the code.
           </div>
         </div>
       </aside>
@@ -212,9 +94,33 @@ export function AuthPage({ mode }: { mode: 'sign-in' | 'sign-up' }) {
 }
 
 export function SignInPage() {
-  return <AuthPage mode="sign-in" />
+  const redirectUrl = useRedirectUrl()
+
+  return (
+    <AuthLayout>
+      <SignIn
+        routing="path"
+        path="/sign-in"
+        signUpUrl="/sign-up"
+        fallbackRedirectUrl={redirectUrl}
+        appearance={appearance}
+      />
+    </AuthLayout>
+  )
 }
 
 export function SignUpPage() {
-  return <AuthPage mode="sign-up" />
+  const redirectUrl = useRedirectUrl()
+
+  return (
+    <AuthLayout>
+      <SignUp
+        routing="path"
+        path="/sign-up"
+        signInUrl="/sign-in"
+        fallbackRedirectUrl={redirectUrl}
+        appearance={appearance}
+      />
+    </AuthLayout>
+  )
 }
