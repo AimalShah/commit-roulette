@@ -2,6 +2,7 @@ import { GitCommitHorizontal, LogIn } from 'lucide-react'
 import { Link } from 'react-router-dom'
 
 import { Wordmark } from '@/components/brand'
+import { MusicToggle } from '@/components/music-toggle'
 import { Button } from '@/components/ui/button'
 import { currentUser } from '@/mock/session'
 
@@ -26,6 +27,7 @@ export function SiteHeader({ showAuth = true }: { showAuth?: boolean }) {
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
+          <MusicToggle />
           <Button asChild variant="ghost" size="icon-sm" className="text-muted-foreground">
             <a href="https://github.com" target="_blank" rel="noreferrer" aria-label="Source on GitHub">
               <GitCommitHorizontal />
